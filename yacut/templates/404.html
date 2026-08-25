@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section class="container my-5 px-4 text-center">
+  <h1 class="display-4"><span style="color:red">404</span></h1>
+  <p class="lead">Страница не найдена.</p>
+  <a class="btn btn-primary" href="{{ url_for('index_view') }}">
+    На главную
+  </a>
+</section>
+{% endblock %}
