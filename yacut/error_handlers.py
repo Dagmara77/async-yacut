@@ -1,6 +1,5 @@
 from http import HTTPStatus
 
-# pyrefly: ignore [missing-import]
 from flask import jsonify, render_template
 
 from . import app, db
