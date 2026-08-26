@@ -1,10 +1,11 @@
+from http import HTTPStatus
 from pathlib import Path
 
 import aiohttp
-from flask import flash, redirect, render_template, send_file
+from flask import abort, flash, redirect, render_template, send_file
 
 from yacut import app
-from .constant import REDIRECT_VIEW
+from .constant import FILES_PREFIX, REDIRECT_VIEW
 from .forms import FileForm, URLForm
 from .models import URLMap
 from .utils import YandexDiskError, upload_files
@@ -20,7 +21,6 @@ def index_view():
         url_map = URLMap.create(
             form.original_link.data,
             form.custom_id.data or None,
-            validated=True,
         )
     except (ValueError, RuntimeError) as error:
         flash(str(error))
@@ -41,10 +41,13 @@ def openapi_view():
 @app.route('/<string:short>', endpoint=REDIRECT_VIEW)
 def redirect_view(short):
     """Редиректит пользователя на оригинальный адрес."""
-    return redirect(URLMap.get(short, or_404=True).original)
+    url_map = URLMap.get_by_short(short)
+    if url_map is None:
+        abort(HTTPStatus.NOT_FOUND)
+    return redirect(url_map.original)
 
 
-@app.route('/files', methods=['GET', 'POST'])
+@app.route(f'/{FILES_PREFIX}', methods=['GET', 'POST'])
 def files_view():
     """Страница загрузки файлов на Яндекс Диск."""
     form = FileForm()

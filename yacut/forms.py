@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import MultipleFileField, StringField, SubmitField, URLField
-from wtforms.validators import DataRequired, Length, Optional, Regexp
+from wtforms.validators import DataRequired, Length, Optional, Regexp, URL
 
 from .constant import (
     INVALID_SHORT_MESSAGE,
@@ -30,6 +30,7 @@ class URLForm(FlaskForm):
         LINK_LABEL,
         validators=[
             DataRequired(message=LINK_REQUIRED_MESSAGE),
+            URL(),
             Length(max=MAX_LINK_LENGTH, message=LINK_TOO_LONG_MESSAGE),
         ],
     )

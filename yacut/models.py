@@ -1,5 +1,4 @@
 import random
-import re
 from datetime import datetime
 
 from flask import url_for
@@ -8,8 +7,6 @@ from . import db
 from .constant import (
     AUTO_SHORT_LENGTH,
     GENERATION_FAILED_MESSAGE,
-    INVALID_SHORT_MESSAGE,
-    LINK_TOO_LONG_MESSAGE,
     MAX_GENERATION_ATTEMPTS,
     MAX_LINK_LENGTH,
     MAX_SHORT_LENGTH,
@@ -17,7 +14,6 @@ from .constant import (
     RESERVED_SHORTS,
     SHORT_CHARACTERS,
     SHORT_EXISTS_MESSAGE,
-    SHORT_MATCH_PATTERN,
 )
 
 
@@ -32,11 +28,25 @@ class URLMap(db.Model):
         """Возвращает полную короткую ссылку."""
         return url_for(REDIRECT_VIEW, short=self.short, _external=True)
 
+    def to_dict(self):
+        """Возвращает данные ссылки для ответа API."""
+        return {
+            'url': self.original,
+            'short_link': self.get_short_link(),
+        }
+
     @staticmethod
-    def get(short, or_404=False):
+    def get_by_short(short):
         """Возвращает запись по короткому идентификатору."""
-        query = URLMap.query.filter_by(short=short)
-        return query.first_or_404() if or_404 else query.first()
+        return URLMap.query.filter_by(short=short).first()
+
+    @staticmethod
+    def short_exists(short):
+        """Проверяет, занято ли короткое имя."""
+        return (
+            short in RESERVED_SHORTS
+            or URLMap.get_by_short(short) is not None
+        )
 
     @staticmethod
     def get_unique_short():
@@ -45,21 +55,15 @@ class URLMap(db.Model):
             short = ''.join(
                 random.choices(SHORT_CHARACTERS, k=AUTO_SHORT_LENGTH)
             )
-            if short not in RESERVED_SHORTS and not URLMap.get(short):
+            if not URLMap.short_exists(short):
                 return short
         raise RuntimeError(GENERATION_FAILED_MESSAGE)
 
     @staticmethod
-    def create(original, short=None, validated=False, commit=True):
-        """Проверяет данные и сохраняет новую запись."""
-        if not validated:
-            if len(original) > MAX_LINK_LENGTH:
-                raise ValueError(LINK_TOO_LONG_MESSAGE)
-            if short and (len(short) > MAX_SHORT_LENGTH
-                          or not re.match(SHORT_MATCH_PATTERN, short)):
-                raise ValueError(INVALID_SHORT_MESSAGE)
+    def create(original, short=None, commit=True):
+        """Сохраняет новую запись."""
         if short:
-            if short in RESERVED_SHORTS or URLMap.get(short):
+            if URLMap.short_exists(short):
                 raise ValueError(SHORT_EXISTS_MESSAGE)
         else:
             short = URLMap.get_unique_short()

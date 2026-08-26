@@ -6,7 +6,8 @@ MAX_SHORT_LENGTH = 16
 MAX_LINK_LENGTH = 2048
 AUTO_SHORT_LENGTH = 6
 MAX_GENERATION_ATTEMPTS = 10
-RESERVED_SHORTS = ('files', 'openapi')
+FILES_PREFIX = 'files'
+RESERVED_SHORTS = (FILES_PREFIX, 'openapi')
 REDIRECT_VIEW = 'redirect_view'
 GENERATION_FAILED_MESSAGE = (
     f'Не удалось сгенерировать короткий идентификатор '
