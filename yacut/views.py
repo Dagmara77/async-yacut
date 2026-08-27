@@ -1,8 +1,7 @@
-from http import HTTPStatus
 from pathlib import Path
 
 import aiohttp
-from flask import abort, flash, redirect, render_template, send_file
+from flask import flash, redirect, render_template, send_file
 
 from yacut import app
 from .constant import FILES_PREFIX, REDIRECT_VIEW
@@ -26,7 +25,7 @@ def index_view():
         flash(str(error))
         return render_template('index.html', form=form)
     return render_template(
-        'index.html', form=form, short_link=url_map.get_short_link()
+        'index.html', form=form, short_link=url_map.to_dict()['short_link']
     )
 
 
@@ -41,9 +40,7 @@ def openapi_view():
 @app.route('/<string:short>', endpoint=REDIRECT_VIEW)
 def redirect_view(short):
     """Редиректит пользователя на оригинальный адрес."""
-    url_map = URLMap.get_by_short(short)
-    if url_map is None:
-        abort(HTTPStatus.NOT_FOUND)
+    url_map = URLMap.query.filter_by(short=short).first_or_404()
     return redirect(url_map.original)
 
 
@@ -71,7 +68,10 @@ def files_view():
         'files.html',
         form=form,
         uploaded_files=[
-            {'filename': filename, 'short_link': url_map.get_short_link()}
+            {
+                'filename': filename,
+                'short_link': url_map.to_dict()['short_link'],
+            }
             for (filename, _), url_map in zip(files, url_maps)
         ],
     )
